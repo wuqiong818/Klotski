@@ -1,1 +1,5 @@
-package client
+package mian
+
+func main() {
+
+}
