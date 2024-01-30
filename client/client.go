@@ -1,5 +1,0 @@
-package mian
-
-func main() {
-
-}
