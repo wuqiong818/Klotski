@@ -4,17 +4,19 @@ import (
 	"errors"
 	"github.com/gorilla/websocket"
 	uuid "github.com/satori/go.uuid"
+	"time"
 )
 
 type Client struct {
-	RoomId      string             `json:"roomId"`
-	UserId      string             `json:"userId"`
-	UserName    string             `json:"userName"`
-	UserProfile string             `json:"userProfile"`
-	UserCer     bool               `json:"userCer"`
-	UserConn    *websocket.Conn    `json:"-"`
-	Hub         map[string]*Client `json:"-"`
-	Score       int                `json:"score"`
+	RoomId      string                        `json:"roomId"`
+	UserId      string                        `json:"userId"`
+	UserName    string                        `json:"userName"`
+	UserProfile string                        `json:"userProfile"`
+	UserCer     bool                          `json:"userCer"`
+	UserConn    *websocket.Conn               `json:"-"`
+	Hub         map[string]map[string]*Client `json:"-"` //第一个string-roomId 第二个string-userId
+	Score       int                           `json:"score"`
+	HealthCheck time.Time
 }
 
 // Certificate 客服端认证
@@ -40,12 +42,37 @@ func (c *Client) CreateRoom() {
 	}
 }
 
-// JoinHub 将连接加入中心
-func (c *Client) JoinHub() {
-
+// JoinHub 将连接加入中心 前提RoomId不为空
+func (c *Client) JoinHub() (flag bool) {
+	if c.RoomId == "" {
+		return
+	}
+	//	先查询是否存在此一个roomId key
+	if myMap, ok := c.Hub[c.RoomId]; ok {
+		myMap[c.UserId] = c
+		flag = true
+		return flag
+	} else {
+		myMap := make(map[string]*Client)
+		myMap[c.UserId] = c     //userId
+		c.Hub[c.RoomId] = myMap //roomId
+		flag = true
+		return flag
+	}
 }
 
-// DeleteFromHub 将连接从中心里删除
+// DeleteFromHub 将连接从中心里删除 ,删除c它自己,前提roomId不为空
 func (c *Client) DeleteFromHub() {
+	if c.RoomId == "" {
+		return
+	}
 
+	if value, ok1 := c.Hub[c.RoomId]; ok1 {
+		if _, ok2 := value[c.UserId]; ok2 {
+			delete(value, c.UserId)
+		}
+	}
+	if len(c.Hub[c.RoomId]) == 0 {
+		delete(c.Hub, c.RoomId)
+	}
 }
