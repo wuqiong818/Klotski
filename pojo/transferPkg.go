@@ -24,6 +24,7 @@ var (
 	RefreshScoreType    = "RefreshScoreType"
 	DiscontinueQuitType = "DiscontinueQuitType"
 	GameOverType        = "GameOverType"
+	PingCheckType       = "PingCheckType"
 )
 
 // Success 状态码定义集合

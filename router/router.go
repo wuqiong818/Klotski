@@ -29,5 +29,6 @@ func HttpGroup() {
 
 	http.HandleFunc("/hello", test.Hello)
 	http.HandleFunc("/", test.Index)
+	http.HandleFunc("/show", test.Show)
 
 }

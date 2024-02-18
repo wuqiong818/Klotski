@@ -21,3 +21,9 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	files, _ := template.ParseFiles("view/index.html")
 	files.Execute(w, nil)
 }
+func Show(w http.ResponseWriter, r *http.Request) {
+	//files, _ := template.ParseFiles("view/index.html")
+	//files.Execute(w, nil)
+	fmt.Println("访问show")
+
+}
