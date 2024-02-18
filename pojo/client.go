@@ -61,7 +61,7 @@ func (c *Client) JoinHub() (flag bool) {
 	}
 }
 
-// DeleteFromHub 将连接从中心里删除 ,删除c它自己,前提roomId不为空
+// DeleteFromHub 逻辑删除 将连接从中心里删除 ,删除c它自己,前提roomId不为空
 func (c *Client) DeleteFromHub() {
 	if c.RoomId == "" {
 		return

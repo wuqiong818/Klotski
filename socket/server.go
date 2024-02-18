@@ -116,18 +116,42 @@ func BuildConn(w http.ResponseWriter, r *http.Request) {
 				flag := client.JoinHub()
 				fmt.Println("JoinRoom", client.Hub)
 				if flag {
+					//第二个人加入房间后，向房间里面的双方互相广播对方的个人信息，发送两个read
+					//注意，这里可能会存在程序漏洞，逻辑上的，当一个房间里面的人数多于两个人是出错
 					responsePkg.Code = pojo.Success
+					if roomMap, ok := client.Hub[client.RoomId]; ok {
+						for userId, user := range roomMap {
+							if userId != client.UserId {
+								fmt.Println("向本人发信息")
+								err := client.UserConn.WriteJSON(user)
+								if err != nil {
+									fmt.Println("向本人发送除本人意外的其他信息失败 err", err)
+								}
+							}
+							//if userId !=
+							fmt.Println("向其他人发信息", user)
+							err := user.UserConn.WriteJSON(client)
+							if err != nil {
+								fmt.Println("向其他人返回的信息 err", err)
+							}
+
+						}
+					}
 				} else {
 					responsePkg.Code = pojo.JoinRoomError
 					responsePkg.Data = "加入房间失败 错误原因 client.JoinHub()"
+					err := client.UserConn.WriteJSON(responsePkg)
+					if err != nil {
+						fmt.Println("服务端返回加入房间信息error", err)
+					}
 				}
 			} else {
 				responsePkg.Code = pojo.JoinRoomError
 				responsePkg.Data = "加入房间失败 错误原因RoomId未赋值"
-			}
-			err := client.UserConn.WriteJSON(responsePkg)
-			if err != nil {
-				fmt.Println("服务端返回加入房间信息error", err)
+				err := client.UserConn.WriteJSON(responsePkg)
+				if err != nil {
+					fmt.Println("服务端返回加入房间信息error", err)
+				}
 			}
 		case pojo.RefreshScoreType:
 			fmt.Println("RefreshScoreType")
