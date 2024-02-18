@@ -1,8 +1,6 @@
 package main
 
-import (
-	"klotski/router"
-)
+import "klotski/router"
 
 func main() {
 	router.Run()

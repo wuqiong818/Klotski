@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"html/template"
 	"net/http"
 )
 
@@ -14,4 +15,9 @@ func Hello(w http.ResponseWriter, r *http.Request) {
 	password := r.FormValue("password")
 	fmt.Println(username)
 	fmt.Println(password)
+}
+
+func Index(w http.ResponseWriter, r *http.Request) {
+	files, _ := template.ParseFiles("view/index.html")
+	files.Execute(w, nil)
 }
