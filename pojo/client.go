@@ -2,6 +2,7 @@ package pojo
 
 import (
 	"errors"
+	"fmt"
 	"github.com/gorilla/websocket"
 	uuid "github.com/satori/go.uuid"
 	"time"
@@ -16,7 +17,7 @@ type Client struct {
 	UserConn    *websocket.Conn               `json:"-"`
 	Hub         map[string]map[string]*Client `json:"-"` //第一个string-roomId 第二个string-userId
 	Score       int                           `json:"score"`
-	HealthCheck time.Time
+	HealthCheck time.Time                     `json:"-"`
 }
 
 // Certificate 客服端认证
@@ -75,4 +76,22 @@ func (c *Client) DeleteFromHub() {
 	if len(c.Hub[c.RoomId]) == 0 {
 		delete(c.Hub, c.RoomId)
 	}
+}
+
+// QueryOtherUser 根据当前用户寻找另一位用户，返回user对象
+func (c *Client) QueryOtherUser() *Client {
+	if roomMap, ok := c.Hub[c.RoomId]; ok { //room
+		for userId, user := range roomMap {
+			if userId != c.UserId {
+				return user
+			}
+		}
+	}
+	return nil
+}
+
+// ProlongLife 延长生命时间
+func (c *Client) ProlongLife() {
+	fmt.Println("延长时间")
+	c.HealthCheck = time.Now().Add(10 * time.Second)
 }
