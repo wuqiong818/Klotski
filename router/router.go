@@ -1,16 +1,19 @@
 package router
 
 import (
+	"klotski/httpLink"
 	"klotski/socket"
-	test "klotski/src"
 	"net/http"
 )
 
 func Run() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("views/static"))))
-	//http.Handle("/pages/", http.StripPrefix("/pages/", http.FileServer(http.Dir("views/pages"))))
+	//httpLink.Handle("/pages/", httpLink.StripPrefix("/pages/", httpLink.FileServer(httpLink.Dir("views/pages"))))
 	Group()
-	http.ListenAndServe("127.0.0.1:8090", nil)
+	//http.ListenAndServe("8.141.88.60:8090", nil) //公网
+	http.ListenAndServe("172.19.22.102:8090", nil) //私网
+	//http.ListenAndServe("192.168.109.145:8090", nil) //电脑本机的
+
 }
 func Group() {
 	WebSocketGroup()
@@ -26,9 +29,6 @@ func WebSocketGroup() {
 }
 
 func HttpGroup() {
-
-	http.HandleFunc("/hello", test.Hello)
-	http.HandleFunc("/", test.Index)
-	http.HandleFunc("/show", test.Show)
+	http.HandleFunc("/welcome", httpLink.Welcome)
 
 }
