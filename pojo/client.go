@@ -34,31 +34,31 @@ func (c *Client) Certificate(certificationInfo *CertificationInfo) (bool, error)
 	}
 }
 
-// CreateRoom 创建房间 -- 用户连接存在并且用户认证通过
-func (c *Client) CreateRoom() {
+// CreateRoomCode 创建房间 -- 用户连接存在并且用户认证通过
+func (c *Client) CreateRoomCode() {
 	if c.UserConn != nil && c.UserCer {
 		uid := uuid.NewV4()
 		c.RoomId = uid.String()
 	}
 }
 
-// JoinHub 将连接加入中心 前提RoomId不为空
+// JoinHub 将连接加入中心 前提RoomId不为空, 加入房间的时候需要检测当前房间里面的人数
 func (c *Client) JoinHub() (flag bool) {
-	if c.RoomId == "" {
-		return
-	}
-	//	先查询是否存在此一个roomId key
+	//	先查询是否存在此一个roomId key 加入房间
 	if myMap, ok := c.Hub[c.RoomId]; ok {
-		myMap[c.UserId] = c
-		flag = true
-		return flag
-	} else {
+		//检测人数
+		count := len(myMap)
+		if count == 1 {
+			myMap[c.UserId] = c
+			flag = true
+		}
+	} else { //创建房间
 		myMap := make(map[string]*Client)
 		myMap[c.UserId] = c     //userId
 		c.Hub[c.RoomId] = myMap //roomId
 		flag = true
-		return flag
 	}
+	return
 }
 
 // DeleteFromHub 逻辑删除 将连接从中心里删除 ,删除c它自己,前提roomId不为空
