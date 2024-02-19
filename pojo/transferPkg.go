@@ -18,13 +18,14 @@ type CertificationInfo struct {
 }
 
 var (
-	CertificationType   = "CertificationType"
-	CreateRoomType      = "CreateRoomType"
-	JoinRoomType        = "JoinRoomType"
-	RefreshScoreType    = "RefreshScoreType"
-	DiscontinueQuitType = "DiscontinueQuitType"
-	GameOverType        = "GameOverType"
-	PingCheckType       = "PingCheckType"
+	CertificationType      = "CertificationType"
+	CreateRoomType         = "CreateRoomType"
+	JoinRoomType           = "JoinRoomType"
+	ExchangeMutualInfoType = "ExchangeMutualInfoType"
+	RefreshScoreType       = "RefreshScoreType"
+	DiscontinueQuitType    = "DiscontinueQuitType"
+	GameOverType           = "GameOverType"
+	PingCheckType          = "PingCheckType"
 )
 
 // Success 状态码定义集合

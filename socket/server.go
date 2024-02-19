@@ -7,6 +7,7 @@ import (
 	"klotski/pojo"
 	"log"
 	"net/http"
+	"time"
 )
 
 var upgrader = websocket.Upgrader{
@@ -29,6 +30,17 @@ func BuildConn(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("远程主机连接成功 IP为", conn.RemoteAddr())
 	//2. 在信息中枢处根据消息类型进行特定的处理
 	client.UserConn = conn
+
+	//计时器 : 如果用户在7秒内没有完成用户认证，则直接断开连接
+	time.AfterFunc(7*time.Second, func() {
+		if !client.UserCer {
+			err := conn.Close()
+			if err != nil {
+				fmt.Println("用户认证失败，关闭连接时遇到err", err)
+				return
+			}
+		}
+	})
 
 	for {
 		_, p, err := client.UserConn.ReadMessage()
@@ -77,7 +89,7 @@ func BuildConn(w http.ResponseWriter, r *http.Request) {
 			responsePkg := new(pojo.ResponsePkg)
 			responsePkg.Type = pojo.CreateRoomType
 			if client.UserCer {
-				client.CreateRoom()
+				client.CreateRoomCode()
 				responsePkg.Code = pojo.Success
 				responsePkg.Data = client.RoomId
 				//创建房间的同时,加入房间
@@ -122,28 +134,33 @@ func BuildConn(w http.ResponseWriter, r *http.Request) {
 					if roomMap, ok := client.Hub[client.RoomId]; ok {
 						for userId, user := range roomMap {
 							if userId != client.UserId {
-								fmt.Println("向本人发信息")
-								err := client.UserConn.WriteJSON(user)
-								if err != nil {
+								//向本客户端发送其他用户的信息
+								//fmt.Println("向本人发信息")
+								marshal1, _ := json.Marshal(user)
+								responsePkg.Data = string(marshal1)
+								err1 := client.UserConn.WriteJSON(responsePkg)
+								if err1 != nil {
 									fmt.Println("向本人发送除本人意外的其他信息失败 err", err)
 								}
+								//向其他客户端发送本客户端的信息
+								//fmt.Println("向其他人发信息", user)
+								marshal2, _ := json.Marshal(client)
+								responsePkg.Data = string(marshal2)
+								err2 := user.UserConn.WriteJSON(responsePkg)
+								if err2 != nil {
+									fmt.Println("向其他人返回的信息 err", err)
+								}
 							}
-							//if userId !=
-							fmt.Println("向其他人发信息", user)
-							err := user.UserConn.WriteJSON(client)
-							if err != nil {
-								fmt.Println("向其他人返回的信息 err", err)
-							}
-
 						}
 					}
 				} else {
 					responsePkg.Code = pojo.JoinRoomError
-					responsePkg.Data = "加入房间失败 错误原因 client.JoinHub()"
+					responsePkg.Data = "加入房间失败 失败原因，房间已满"
 					err := client.UserConn.WriteJSON(responsePkg)
 					if err != nil {
 						fmt.Println("服务端返回加入房间信息error", err)
 					}
+					client.UserConn.Close()
 				}
 			} else {
 				responsePkg.Code = pojo.JoinRoomError
