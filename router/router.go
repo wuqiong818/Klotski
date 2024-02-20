@@ -10,9 +10,9 @@ func Run() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("views/static"))))
 	//httpLink.Handle("/pages/", httpLink.StripPrefix("/pages/", httpLink.FileServer(httpLink.Dir("views/pages"))))
 	Group()
-	http.ListenAndServe("172.19.22.102:8090", nil) //服务器私网
+	//http.ListenAndServe("172.19.22.102:8090", nil) //服务器私网 172.19.22.102
 	//http.ListenAndServe("8.141.88.60:8090", nil) //公网
-	//http.ListenAndServe("192.168.109.145:8090", nil) //电脑本机的
+	http.ListenAndServe("localhost:8090", nil) //电脑本机的
 
 }
 func Group() {
@@ -30,5 +30,8 @@ func WebSocketGroup() {
 
 func HttpGroup() {
 	http.HandleFunc("/welcome", httpLink.Welcome)
-
+	http.HandleFunc("/create", httpLink.CreateUser)
+	http.HandleFunc("/delete", httpLink.DeleteUser)
+	http.HandleFunc("/getId", httpLink.GetUser)
+	http.HandleFunc("/getAll", httpLink.GetAll)
 }
