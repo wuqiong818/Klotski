@@ -13,6 +13,9 @@ import (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
 }
 
 // Hub 保证这里的hub变量是唯一的，并且所有的Client对象操作的是同一个
