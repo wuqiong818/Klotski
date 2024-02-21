@@ -24,8 +24,8 @@ type User struct {
 
 // 创建一个 redis 客户端
 var rdb = redis.NewClient(&redis.Options{
-	Addr:     "192.168.22.128:6379",
-	Password: "123",
+	Addr:     "8.141.88.60:6379",
+	Password: "123456",
 	DB:       0,
 })
 
