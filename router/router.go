@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"klotski/httpLink"
 	"klotski/socket"
 	"net/http"
@@ -10,9 +11,13 @@ func Run() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("views/static"))))
 	//httpLink.Handle("/pages/", httpLink.StripPrefix("/pages/", httpLink.FileServer(httpLink.Dir("views/pages"))))
 	Group()
-	//http.ListenAndServe("172.19.22.102:8090", nil) //服务器私网 172.19.22.102
+	err := http.ListenAndServe(":8090", nil)
+	//err := http.ListenAndServe("8.141.88.60:8090", nil) //公网 cannot assign requested address
+	if err != nil {
+		fmt.Println("listenAndServe", err)
+		return
+	}
 	//http.ListenAndServe("8.141.88.60:8090", nil) //公网
-	http.ListenAndServe("localhost:8090", nil) //电脑本机的
 }
 func Group() {
 	WebSocketGroup()
