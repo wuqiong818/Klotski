@@ -12,12 +12,10 @@ func Run() {
 	//httpLink.Handle("/pages/", httpLink.StripPrefix("/pages/", httpLink.FileServer(httpLink.Dir("views/pages"))))
 	Group()
 	err := http.ListenAndServe(":8090", nil)
-	//err := http.ListenAndServe("8.141.88.60:8090", nil) //公网 cannot assign requested address
 	if err != nil {
 		fmt.Println("listenAndServe", err)
 		return
 	}
-	//http.ListenAndServe("8.141.88.60:8090", nil) //公网
 }
 func Group() {
 	WebSocketGroup()
