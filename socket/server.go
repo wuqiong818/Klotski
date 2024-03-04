@@ -33,7 +33,7 @@ func BuildConn(w http.ResponseWriter, r *http.Request) {
 	client := &pojo.Client{User: &pojo.User{}, Hub: &pojo.HupCenter{}} //非字段不要为nil
 	client.Hub.ClientsMap = Hub
 	client.User.UserConn = conn
-	client.User.HealthCheck = time.Now().Add(10 * time.Second)
+	client.User.HealthCheck = time.Now().Add(30 * time.Second)
 
 	//计时器 : 如果用户在7秒内没有完成用户认证，则直接断开连接
 	time.AfterFunc(7*time.Second, func() {

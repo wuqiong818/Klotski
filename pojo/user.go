@@ -45,5 +45,5 @@ func (u *User) CreateRoomCode() {
 // ProlongLife 延长生命时间
 func (u *User) ProlongLife() {
 	fmt.Println("延长时间")
-	u.HealthCheck = time.Now().Add(10 * time.Second)
+	u.HealthCheck = time.Now().Add(30 * time.Second)
 }
