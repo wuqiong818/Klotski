@@ -32,6 +32,7 @@ func WebSocketGroup() {
 
 func HttpGroup() {
 	http.HandleFunc("/welcome", httpLink.Welcome)
+	http.HandleFunc("/demo", httpLink.Demo)
 	http.HandleFunc("/create", httpLink.CreateUser)
 	http.HandleFunc("/delete", httpLink.DeleteUser)
 	http.HandleFunc("/getId", httpLink.GetUser)
