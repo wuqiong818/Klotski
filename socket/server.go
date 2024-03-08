@@ -60,6 +60,10 @@ func Controller(client *pojo.Client) {
 				fmt.Println("后台断开出错", err)
 			}
 		}()*/
+	defer func() {
+		client.Hub.UnRegister <- client
+
+	}()
 
 	for {
 		_, p, err := client.User.UserConn.ReadMessage()

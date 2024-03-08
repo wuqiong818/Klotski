@@ -53,10 +53,10 @@ func (h *HupCenter) Run() {
 			}
 		case <-checkTicker.C:
 			for _, roomMap := range h.ClientsMap {
-				fmt.Println(roomMap)
+				//fmt.Println(roomMap)
 				for _, client := range roomMap {
-					fmt.Println(client)
-					fmt.Println(client.User.HealthCheck)
+					//fmt.Println(client)
+					//fmt.Println(client.User.HealthCheck)
 					if client.User.HealthCheck.Before(time.Now()) {
 						h.UnRegister <- client
 					}

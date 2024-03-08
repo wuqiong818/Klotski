@@ -25,9 +25,6 @@ func Run() {
 }
 
 func startWebSocketServer(hub *pojo.HupCenter) {
-	//当在地址栏中输入ws://127.0.0.1:8090/ws，建立长连接
-	//自动开启协程了吗？
-	//为什么每一个访问的远程IP都不相同
 	http.HandleFunc("/ws", socket.WsHandle(hub))
 	//长连接
 	if err := http.ListenAndServe(":8091", nil); err != nil {
@@ -57,5 +54,4 @@ func waitForTerminationSignal() {
 	<-stopChan
 
 	log.Println("Server has been gracefully stopped.")
-	fmt.Println("实在是优雅")
 }
