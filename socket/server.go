@@ -52,23 +52,20 @@ func WsHandle(hub *pojo.HupCenter) http.HandlerFunc {
 }
 
 func Controller(client *pojo.Client) {
-	/*	//延迟函数要放到函数最上面,不然的话,就一直执行不到
-		defer func() {
-			client.Hub.DeleteFromHub(client)
-			fmt.Println("已删除断开连接,当前map为", client.Hub.ClientsMap)
-			if err := client.User.UserConn.Close(); err != nil {
-				fmt.Println("后台断开出错", err)
-			}
-		}()*/
 	defer func() {
 		client.Hub.UnRegister <- client
-
 	}()
 
 	for {
 		_, p, err := client.User.UserConn.ReadMessage()
 		if err != nil {
-			log.Println("server.go conn.ReadMessage 读取信息错误", err)
+			if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
+				//用户主动给关闭连接后的输出
+				log.Println("WebSocket closed")
+			} else {
+				//服务器主动断开走这个，从一个断开的连接中读取信息
+				log.Println("server.go conn.ReadMessage 读取信息错误", err)
+			}
 			return
 		}
 
