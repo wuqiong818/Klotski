@@ -4,74 +4,68 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"klotski/pkg"
 	"klotski/pojo"
 	"log"
 	"net/http"
 	"time"
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
-}
+//// Hub 保证这里的hub变量是唯一的，并且所有的Client对象操作的是同一个
+//var Hub = make(map[string]map[string]*pojo.Client)
 
-// Hub 保证这里的hub变量是唯一的，并且所有的Client对象操作的是同一个
-var Hub = make(map[string]map[string]*pojo.Client)
+func WsHandle(hub *pojo.HupCenter) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		//将短连接 升级成 长连接-建立WebSocket通信
+		upgrade := websocket.Upgrader{
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		}
 
-func BuildConn(w http.ResponseWriter, r *http.Request) {
-	//1. 服务端与客户端建立连接
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println("conn错误", err)
-		return
+		conn, err := upgrade.Upgrade(w, r, nil)
+		if err != nil {
+			log.Println("conn错误", err)
+			return
+		}
+
+		fmt.Println("远程主机连接成功 IP为", conn.RemoteAddr())
+		//进行client的初始化操作
+		client := &pojo.Client{User: &pojo.User{}, Hub: &pojo.HupCenter{}} //非字段不要为nil
+		client.Hub = hub
+		client.User.UserConn = conn
+		client.User.HealthCheck = time.Now().Add(time.Duration(pkg.HeartCheckSecond) * time.Second) //健康时间
+
+		//计时器 : 如果用户规定秒内没有完成用户认证，则直接断开连接
+		time.AfterFunc(time.Duration(pkg.UserAuthSecond)*time.Second, func() {
+			if !client.User.UserCer {
+				fmt.Println("用户认证失败，关闭连接")
+				client.User.Close()
+			}
+		})
+
+		//接受信息 根据信息类型进行分别处理
+		Controller(client)
 	}
-	fmt.Println("远程主机连接成功 IP为", conn.RemoteAddr())
-	//进行client的初始化操作
-	client := &pojo.Client{User: &pojo.User{}, Hub: &pojo.HupCenter{}} //非字段不要为nil
-	client.Hub.ClientsMap = Hub
-	client.User.UserConn = conn
-	client.User.HealthCheck = time.Now().Add(30 * time.Second)
-
-	//计时器 : 如果用户在7秒内没有完成用户认证，则直接断开连接
-	time.AfterFunc(7*time.Second, func() {
-		if !client.User.UserCer {
-			err := conn.Close()
-			if err != nil {
-				fmt.Println("用户认证失败，关闭连接时遇到err", err)
-				return
-			}
-		}
-	})
-
-	//对当前客户端连接进行心跳检测
-	go func() {
-		for {
-			if client.User.HealthCheck.Before(time.Now()) {
-				//fmt.Println("心跳检测未通过，即将关闭连接")
-				client.Hub.DeleteFromHub(client)
-				fmt.Println("心跳死亡", client.Hub.ClientsMap)
-				err2 := client.User.UserConn.Close()
-				if err2 != nil {
-					fmt.Println("心跳检测中的关闭连接err", err)
-				}
-				break
-			}
-		}
-	}()
-
-	//接受信息 根据信息类型进行分别处理
-	Controller(client)
 }
 
 func Controller(client *pojo.Client) {
+	/*	//延迟函数要放到函数最上面,不然的话,就一直执行不到
+		defer func() {
+			client.Hub.DeleteFromHub(client)
+			fmt.Println("已删除断开连接,当前map为", client.Hub.ClientsMap)
+			if err := client.User.UserConn.Close(); err != nil {
+				fmt.Println("后台断开出错", err)
+			}
+		}()*/
+
 	for {
 		_, p, err := client.User.UserConn.ReadMessage()
 		if err != nil {
 			log.Println("server.go conn.ReadMessage 读取信息错误", err)
-			break
+			return
 		}
 
 		var requestPkg pojo.RequestPkg
@@ -112,6 +106,7 @@ func Controller(client *pojo.Client) {
 		case pojo.RefreshScoreType:
 			//什么是否进行分数更新，前端判断 type:RefreshScoreType, data:step、step、score
 			//当用户的行为触发前端游戏机制的更新时，前端调用此接口，后端进行分数的转发 不需要做业务处理，直接转发即可
+			fmt.Println("游戏交换中数据", client)
 			client.RefreshScoreProcess(requestPkg)
 
 		case pojo.DiscontinueQuitType:
@@ -122,13 +117,12 @@ func Controller(client *pojo.Client) {
 			fmt.Println("GameOverType")
 
 		case pojo.HeartCheckType:
-			fmt.Println("HeartCheckType")
 			//开启一个协程遍历hub中的Client，进行健康检测，生命时间是否会过期，如果过期进行逻辑删除和关闭连接
 			if requestPkg.Data == "PING" {
 				client.HeartCheckProcess()
 			}
-
 		}
+
 	}
-	defer client.User.UserConn.Close()
+
 }

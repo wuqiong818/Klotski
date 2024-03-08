@@ -49,7 +49,7 @@ func (c *Client) CreateRoomProcess() {
 		responsePkg.Code = Success
 		responsePkg.Data = c.User.RoomId
 		//创建房间的同时,加入房间
-		c.Hub.JoinHub(c)
+		c.Hub.Register <- c
 		fmt.Println("加入房间信息", c.Hub.ClientsMap)
 	} else {
 		responsePkg.Code = UserCertificationError
@@ -66,11 +66,21 @@ func (c *Client) JoinRoomProcess(uuid string) {
 	c.User.RoomId = uuid
 	responsePkg := new(ResponsePkg)
 	responsePkg.Type = JoinRoomType
-
+	var condition int
 	if c.User.RoomId != "" {
-		flag := c.Hub.JoinHub(c)
-		fmt.Println("加入房间", c.Hub.ClientsMap)
-		if flag {
+		if clientMap, ok := c.Hub.ClientsMap[c.User.RoomId]; ok {
+			if len(clientMap) == 1 {
+				condition = 1 //房间人数正常，可以进行加入
+				c.Hub.Register <- c
+			} else {
+				condition = 2 //房间人数已满
+			}
+		} else {
+			condition = 0 //房间还未创建
+			// 房间还未创建
+		}
+		//这是加入房间后处理的逻辑
+		if condition == 1 {
 			//第二个人加入房间后，向房间里面的双方互相广播对方的个人信息，发送两个read
 			responsePkg.Code = Success
 			if roomMap, ok := c.Hub.ClientsMap[c.User.RoomId]; ok {
@@ -93,7 +103,7 @@ func (c *Client) JoinRoomProcess(uuid string) {
 					}
 				}
 			}
-		} else {
+		} else if condition == 2 {
 			responsePkg.Code = JoinRoomError
 			responsePkg.Data = "加入房间失败 失败原因，房间已满"
 			err := c.User.UserConn.WriteJSON(responsePkg)
@@ -126,6 +136,7 @@ func (c *Client) RefreshScoreProcess(requestPkg RequestPkg) {
 		gameDataPkg.Code = Success
 		gameDataPkg.Data = requestPkg.Data
 		otherClient := c.Hub.QueryOtherUser(c)
+		fmt.Println(otherClient)
 		err := otherClient.User.UserConn.WriteJSON(gameDataPkg)
 		if err != nil {
 			fmt.Println("转发游戏数据时 err", err)
@@ -144,7 +155,7 @@ func (c *Client) RefreshScoreProcess(requestPkg RequestPkg) {
 
 func (c *Client) DiscontinueQuitProcess() {
 	//用户自行离开或者网络异常 断开连接
-	c.Hub.DeleteFromHub(c)
+	c.Hub.UnRegister <- c
 	fmt.Println("退出房间", c.Hub.ClientsMap)
 	err := c.User.UserConn.Close()
 	if err != nil {
@@ -164,42 +175,3 @@ func (c *Client) HeartCheckProcess() {
 		fmt.Println("心跳检测发送err", err)
 	}
 }
-
-/*
-
-func (c *Client) CreateRoomProcess(requestPkg RequestPkg) {
-
-}
-
-*/
-
-/*// Certificate 客服端身份认证
-func (c *Client) Certificate(certificationInfo *CertificationInfo) (bool, error) {
-	if certificationInfo.UserId != "" && certificationInfo.UserName != "" && certificationInfo.UserProfile != "" {
-		c.User.UserId = certificationInfo.UserId
-		c.User.UserName = certificationInfo.UserName
-		c.User.UserProfile = certificationInfo.UserProfile
-		c.User.UserCer = true
-		return true, nil
-	} else {
-		c.User.UserCer = false
-		err := errors.New("用户认证失败")
-		return false, err
-	}
-}
-*/
-
-/*// CreateRoomCode 创建房间 -- 用户连接存在并且用户认证通过
-func (c *Client) CreateRoomCode() {
-	if c.UserConn != nil && c.UserCer {
-		uid := uuid.NewV4()
-		c.RoomId = uid.String()
-	}
-}
-
-// ProlongLife 延长生命时间
-func (c *Client) ProlongLife() {
-	fmt.Println("延长时间")
-	c.HealthCheck = time.Now().Add(10 * time.Second)
-}
-*/

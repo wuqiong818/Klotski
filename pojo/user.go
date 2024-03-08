@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	uuid "github.com/satori/go.uuid"
+	"klotski/pkg"
+	"sync"
 	"time"
 )
 
@@ -15,8 +17,9 @@ type User struct {
 	UserProfile string          `json:"userProfile"`
 	UserCer     bool            `json:"userCer"` //是否验证通过
 	UserConn    *websocket.Conn `json:"-"`
-	//Score       int             `json:"score"`
-	HealthCheck time.Time `json:"-"`
+	HealthCheck time.Time       `json:"-"`
+	Closed      bool
+	mutex       sync.Mutex
 }
 
 // Certificate 客服端身份认证
@@ -42,8 +45,19 @@ func (u *User) CreateRoomCode() {
 	}
 }
 
+// Close 关闭连接
+func (u *User) Close() {
+	u.mutex.Lock()
+	defer u.mutex.Unlock()
+	if !u.Closed {
+		if err := u.UserConn.Close(); err != nil {
+			fmt.Println("关闭用户连接 err", err)
+		}
+		u.Closed = true
+	}
+}
+
 // ProlongLife 延长生命时间
 func (u *User) ProlongLife() {
-	fmt.Println("延长时间")
-	u.HealthCheck = time.Now().Add(30 * time.Second)
+	u.HealthCheck = time.Now().Add(time.Duration(pkg.HeartCheckSecond) * time.Second)
 }

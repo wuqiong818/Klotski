@@ -16,12 +16,6 @@ func Welcome(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "服务器返回的信息<h1>Welcome March</h1>") //打印
 }
 
-func Demo(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8") //设置请求头
-	fmt.Println("demo!!!")
-	fmt.Fprintln(w, "<h1>自动化demo</h1>")
-}
-
 type User struct {
 	ID    string `json:"userId"`
 	Name  string `json:"userName"`
@@ -39,7 +33,7 @@ var rdb = redis.NewClient(&redis.Options{
 // 定义一个上下文
 var ctx = context.Background()
 
-// 定义一个处理器函数，用于创建用户数据
+// CreateUser 定义一个处理器函数，用于创建用户数据
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,DELETE")
@@ -192,7 +186,7 @@ func GetAll(w http.ResponseWriter, r *http.Request) {
 //	w.Write(data)
 //}
 
-// 定义一个处理器函数，用于删除用户数据
+// DeleteUser 定义一个处理器函数，用于删除用户数据
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,DELETE")
